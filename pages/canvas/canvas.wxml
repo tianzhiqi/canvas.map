@@ -1,0 +1,3 @@
+<scroll-view scroll-x scroll-y bindscroll="viewScroll" style="width: {{windowWidth}}px;height: {{windowHeight}}px">
+  <canvas canvas-id="mapCanvas" bindtap="mapTap" style="width: {{canvasWidth}}px;height: {{canvasHeight}}px"></canvas>
+</scroll-view>
