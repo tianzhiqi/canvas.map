@@ -19,9 +19,18 @@ Page({
     lineColor: '#eee', // 网格线颜色
     fillUnit: [], // 填充单元格x、y轴集合
     context: null,
-    bounds: {}
+    bounds: {},
+    userPosition: [{
+      x:0,
+      y:0
+    },{
+      x: 100,
+      y: 100
+    }],
+    tempPosition: []
   },
-
+  scale: 1,
+  gesture: null,
   /**
    * 生命周期函数--监听页面加载
    */
@@ -47,26 +56,24 @@ Page({
       this.drawMap() // 初始化地图
       this.drawGrid() // 初始化网格
       this.data.context.draw()
+      this.data.userPosition.map(item => {
+        this.changeColor(item.x, item.y)
+      })
     })
   },
   viewScroll(event) { // 不需要setData
     this.data.scrollX = event.detail.scrollLeft
     this.data.scrollY = event.detail.scrollTop
   },
-
-  mapTap(event) { // 点击网格
-    let touchPosition = event.detail // 获取点击的坐标
-    let col = Math.ceil((touchPosition.x + this.data.scrollX) / this.data.unitWidth) // 第几列
-    let row = Math.ceil((touchPosition.y + this.data.scrollY) / this.data.unitWidth) // 第几行
-    let bounds = this.data.bounds
-    let type, colWidth = col * this.data.unitWidth, rowWidth = row * this.data.unitWidth
+  changeColor(x, y) {
     let list, red, green, blue, alpha, average
+    const that = this
     wx.canvasGetImageData({
       canvasId: 'mapCanvas',
-      x: colWidth - this.data.unitWidth,
-      y: rowWidth - this.data.unitWidth,
-      width: 10,
-      height: 10,
+      x: x,
+      y: y,
+      width: that.data.unitWidth * that.scale,
+      height: that.data.unitWidth * that.scale,
       success: function(res) {
         let flag = res.data.indexOf(245) !== -1
         for(let i = 0,len = res.data.length;i<len;i+= 4) {
@@ -87,10 +94,10 @@ Page({
         list = res.data
         wx.canvasPutImageData({
           canvasId: 'mapCanvas',
-          x: colWidth - 10,
-          y: rowWidth - 10,
-          width: 10,
-          height: 10,
+          x: x,
+          y: y,
+          width: that.data.unitWidth * that.scale,
+          height: that.data.unitWidth * that.scale,
           data: list,
           success: function(result) {
             console.log(result)
@@ -98,6 +105,45 @@ Page({
         })
       }
     })
+  },
+  touchstart(event) {
+    const touch = event.touches
+    const that = this
+    if(touch.length === 1 || touch.length === 2) {
+      this.gesture = {
+        touches0: touch,
+        scale0: this.scale,
+        lastTouches: touch,
+        moved: false,
+        canceled: false
+      }
+      if(touch.length === 1) {
+        let touchPosition = touch[0] // 获取点击的坐标
+        let col = Math.ceil((touchPosition.pageX + this.data.scrollX) / this.data.unitWidth) // 第几列
+        let row = Math.ceil((touchPosition.pageY + this.data.scrollY) / this.data.unitWidth) // 第几行
+        let type, colWidth = col * this.data.unitWidth, rowWidth = row * this.data.unitWidth
+        this.changeColor(colWidth - this.data.unitWidth, rowWidth - this.data.unitWidth)
+      }
+    }
+  },
+  touchmove(event) {
+    console.log(event)
+    const touch = event.touches
+    const that = this
+    const { touches0, scale0, lastTouches } = this.gesture
+    if(touch.length === 2) {
+    }
+  },
+  touchend() {
+    console.log(3)
+  },
+  mapTap(event) { // 点击网格
+    let touchPosition = event.detail // 获取点击的坐标
+    let col = Math.ceil((touchPosition.x + this.data.scrollX) / this.data.unitWidth) // 第几列
+    let row = Math.ceil((touchPosition.y + this.data.scrollY) / this.data.unitWidth) // 第几行
+    let bounds = this.data.bounds
+    let type, colWidth = col * this.data.unitWidth, rowWidth = row * this.data.unitWidth
+    this.changeColor(colWidth - this.data.unitWidth, rowWidth - this.data.unitWidth)
     return
     let fillUnit = this.data.fillUnit
     let random = Math.random(),
@@ -133,20 +179,19 @@ Page({
       context,
       lineColor,
       unitWidth,
-      unitWidth,
       lineWidth,
       canvasWidth,
       canvasHeight
     } = this.data
     context.setStrokeStyle(lineColor)
     context.setLineWidth(lineWidth)
-    for (let i = unitWidth + lineWidth; i < canvasWidth; i += unitWidth) {
+    for (let i = unitWidth  * this.scale + lineWidth; i < canvasWidth; i += unitWidth * this.scale) {
       context.beginPath();
       context.moveTo(i, 0);
       context.lineTo(i, canvasHeight);
       context.stroke();
     }
-    for (let i = lineWidth; i < canvasHeight; i += unitWidth) {
+    for (let i = lineWidth; i < canvasHeight; i += unitWidth * this.scale) {
       context.beginPath();
       context.moveTo(0, i);
       context.lineTo(canvasWidth, i);
