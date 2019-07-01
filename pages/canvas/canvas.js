@@ -132,7 +132,13 @@ Page({
     const that = this
     const { touches0, scale0, lastTouches } = this.gesture
     if(touch.length === 2) {
+      let 
     }
+  },
+  distance(fir, sec) {
+    let x = fir.pageX - sec.pageX
+    let y = fir.pageY - sec.pageY
+    return Math.sqrt(x * x + y * y)
   },
   touchend() {
     console.log(3)
